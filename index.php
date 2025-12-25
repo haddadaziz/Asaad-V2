@@ -2,7 +2,7 @@
 require_once 'config.php';
 
 $database = new Database();
-$db = $database->getConnection();
+$conn = $database->getConnection();
 ?>
 
 <!DOCTYPE html>

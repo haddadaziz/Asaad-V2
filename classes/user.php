@@ -33,7 +33,8 @@ class User
     {
         return $this->role;
     }
-    public function get_statut(){
+    public function get_statut()
+    {
         return $this->statut;
     }
     public static function verifier_login($conn, $email, $password)
@@ -52,10 +53,34 @@ class User
                 $user['nom'],
                 $user['email'],
                 $user['role'],
-                $user['motpasse_hash']
+                $user['motpasse_hash'],
+                $user['statut']
             );
         }
         return null;
+    }
+    public static function find_all_users($conn)
+    {
+        $stmt = $conn->prepare("SELECT * FROM utilisateurs");
+        $stmt->execute();
+        $liste_utilisateurs = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $user = new User(
+                $row['id_utilisateur'],
+                $row['nom'],
+                $row['email'],
+                $row['role'],
+                $row['motpasse_hash'],
+                $row['statut'],
+            );
+            $liste_utilisateurs[] = $user;
+        }
+        return $liste_utilisateurs;
+    }
+    public static function stats_visiteurs($conn) {
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM utilisateurs WHERE role = 'visiteur'");
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 }
 ?>

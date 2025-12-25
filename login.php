@@ -4,6 +4,9 @@ $message = "";
 require_once 'config.php';
 require_once 'classes/user.php';
 
+$database = new Database();
+$conn = $database->getConnection();
+
 if (isset($_GET['redirect'])) {
     header("Location: login.php?status=must_be_connected");
 }
