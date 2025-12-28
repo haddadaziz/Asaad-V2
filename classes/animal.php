@@ -1,6 +1,5 @@
 <?php
-class Animal
-{
+class Animal {
     private $id;
     private $nom;
     private $espece;
@@ -10,89 +9,61 @@ class Animal
     private $descriptioncourte;
     private $id_habitat;
 
-    public function __construct($id, $nom, $espece, $alimentation, $image, $paysorigine, $descriptioncourte, $id_habitat)
-    {
-        $this->id = $id;
-        $this->nom = $nom;
-        $this->espece = $espece;
-        $this->alimentation = $alimentation;
-        $this->image = $image;
-        $this->paysorigine = $paysorigine;
-        $this->descriptioncourte = $descriptioncourte;
-        $this->id_habitat = $id_habitat;
+    public function __construct() { }
+
+    public function getId() { return $this->id; }
+    public function getNom() { return $this->nom; }
+    public function getEspece() { return $this->espece; }
+    public function getAlimentation() { return $this->alimentation; }
+    public function getImage() { return $this->image; }
+
+    public function get_pays_origine() { return $this->paysorigine; } 
+    
+    public function get_description_courte() { return $this->descriptioncourte; }
+    
+    public function get_nom_habitat($conn) {
+        if(empty($this->id_habitat)) return "Non défini";
+        $stmt = $conn->prepare("SELECT nom FROM habitats WHERE id_habitat = ?");
+        $stmt->execute([$this->id_habitat]);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res ? $res['nom'] : "Inconnu";
     }
 
-    public function get_id()
-    {
-        return $this->id;
-    }
-    public function get_nom()
-    {
-        return $this->nom;
-    }
-    public function get_espece()
-    {
-        return $this->espece;
-    }
-    public function get_alimentation()
-    {
-        return $this->alimentation;
-    }
-    public function get_image()
-    {
-        return $this->image;
-    }
-    public function get_paysorigine()
-    {
-        return $this->paysorigine;
-    }
-    public function get_descriptioncourte()
-    {
-        return $this->descriptioncourte;
-    }
-    public function get_id_habitat()
-    {
-        return $this->id_habitat;
-    }
-    public static function find_all_animaux($conn)
-    {
-        $stmt = $conn->prepare("SELECT * FROM animaux");
-        $stmt->execute();
-        $liste_animaux = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $animal = new Animal(
-                $row['id_animal'],
-                $row['nom'],
-                $row['espèce'],
-                $row['alimentation'],
-                $row['image'],
-                $row['paysorigine'],
-                $row['descriptioncourte'],
-                $row['id_habitat']
-            );
-            $liste_animaux[] = $animal;
+    public static function filtrer_animaux($conn, $habitat, $pays) {
+        
+        if (!empty($habitat) && !empty($pays)) {
+            $sql = "SELECT * FROM animaux WHERE id_habitat = ? AND paysorigine = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$habitat, $pays]);
         }
-        return $liste_animaux;
-    }
-    public static function stats_animaux($conn)
-    {
-        $stmt = $conn->query("SELECT COUNT(*) FROM animaux");
-        return $stmt->fetchColumn();
-    }
-
-    public static function ajouter_animal($conn, $nom, $espèce, $alimentation, $image,$paysorigine,$descriptioncourte,$id_habitat)
-    {
-        $sql_verif = "SELECT COUNT(*) FROM animaux WHERE LOWER(nom) = LOWER(?)";
-        $stmt_verif = $conn->prepare($sql_verif);
-        $stmt_verif->execute([$nom]);
-
-        if ($stmt_verif->fetchColumn() > 0) {
-            return false;
+        else if (!empty($habitat)) {
+            $sql = "SELECT * FROM animaux WHERE id_habitat = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$habitat]);
+        }
+        else if (!empty($pays)) {
+            $sql = "SELECT * FROM animaux WHERE paysorigine = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$pays]);
+        }
+        else {
+            $sql = "SELECT * FROM animaux";
+            $stmt = $conn->query($sql);
+            return $stmt->fetchAll(PDO::FETCH_CLASS, 'Animal');
         }
 
-        $sql = "INSERT INTO animaux (nom,espèce,alimentation,image,paysorigine,descriptioncourte,id_habitat) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        return $stmt->fetchAll(PDO::FETCH_CLASS, 'Animal');
+    }
+
+    public static function find_all_animaux($conn) {
+        $sql = "SELECT * FROM animaux";
+        $stmt = $conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_CLASS, 'Animal');
+    }
+        public static function ajouter_animal($conn, $nom, $espece, $alimentation, $image, $pays, $desc, $id_habitat) {
+        $sql = "INSERT INTO animaux (nom, espece, alimentation, image, paysorigine, descriptioncourte, id_habitat) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$nom, $espèce, $alimentation, $image, $paysorigine, $descriptioncourte,$id_habitat]);
+        return $stmt->execute([$nom, $espece, $alimentation, $image, $pays, $desc, $id_habitat]);
     }
 }
 ?>

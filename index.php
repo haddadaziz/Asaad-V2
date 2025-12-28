@@ -1,8 +1,22 @@
 <?php
+session_start();
 require_once 'config.php';
+require_once 'classes/animal.php';
+
+if (isset($_SESSION['user_id'])) {
+    if ($_SESSION['role'] === 'visiteur') {
+        header("Location: visiteur.php");
+    } elseif ($_SESSION['role'] === 'guide') {
+        header("Location: guide_dashboard.php");
+    } elseif ($_SESSION['role'] === 'admin') {
+        header("Location: admin_dashboard.php");
+    }
+    exit();
+}
 
 $database = new Database();
 $conn = $database->getConnection();
+$animaux_vitrine = Animal::find_all_animaux($conn);
 ?>
 
 <!DOCTYPE html>
@@ -13,7 +27,7 @@ $conn = $database->getConnection();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zoo ASSAD - CAN 2025 Maroc</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="script.js" defer></script>
+    <script src="script.js?v=<?= time() ?>" defer></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap"
         rel="stylesheet">
@@ -56,31 +70,40 @@ $conn = $database->getConnection();
             </a>
 
             <div class="hidden md:flex items-center space-x-8 font-semibold text-sm uppercase tracking-wide">
-                <a href="#accueil"
-                    class="hover:text-yellow-300 transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-yellow-300 after:transition-all hover:after:w-full">Accueil</a>
-                <a href="#asaad"
-                    class="hover:text-yellow-300 transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-yellow-300 after:transition-all hover:after:w-full">Asaad</a>
-                <a href="#animaux"
-                    class="hover:text-yellow-300 transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-yellow-300 after:transition-all hover:after:w-full">Nos
-                    Animaux</a>
-                <a href="#visites"
-                    class="hover:text-yellow-300 transition relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-yellow-300 after:transition-all hover:after:w-full">Visites</a>
+                <a href="#accueil" class="hover:text-yellow-300 transition">Accueil</a>
+                <a href="#asaad" class="hover:text-yellow-300 transition">Asaad</a>
+                <a href="#animaux" class="hover:text-yellow-300 transition">Nos Animaux</a>
+                <a href="#visites" class="hover:text-yellow-300 transition">Visites</a>
             </div>
 
             <div class="hidden md:flex items-center space-x-4">
-                <a href="login.php"
-                    class="text-white hover:text-yellow-200 font-medium px-4 py-2 border border-transparent hover:border-white rounded transition">
-                    <i class="fa-solid fa-user mr-2"></i>Connexion
-                </a>
-                <a href="register.php"
-                    class="bg-maroc-green hover:bg-green-800 text-white px-6 py-2 rounded-full font-bold shadow-md transition transform hover:scale-105 border border-green-700">
-                    Inscription
-                </a>
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <span class="text-yellow-200 text-sm font-bold">Bonjour,
+                        <?= htmlspecialchars($_SESSION['nom']) ?></span>
+                    <?php if ($_SESSION['role'] == 'visiteur'): ?>
+                        <a href="visiteur.php"
+                            class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full font-bold text-sm border border-white/50">Mon
+                            Espace</a>
+                    <?php elseif ($_SESSION['role'] == 'guide'): ?>
+                        <a href="guide_dashboard.php"
+                            class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full font-bold text-sm border border-white/50">Espace
+                            Guide</a>
+                    <?php elseif ($_SESSION['role'] == 'admin'): ?>
+                        <a href="admin_dashboard.php"
+                            class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full font-bold text-sm border border-white/50">Admin</a>
+                    <?php endif; ?>
+                    <a href="logout.php" class="text-white hover:text-yellow-200"><i class="fa-solid fa-power-off"></i></a>
+                <?php else: ?>
+                    <a href="login.php"
+                        class="text-white hover:text-yellow-200 font-medium px-4 py-2 border border-transparent hover:border-white rounded transition">
+                        <i class="fa-solid fa-user mr-2"></i>Connexion
+                    </a>
+                    <a href="register.php"
+                        class="bg-maroc-green hover:bg-green-800 text-white px-6 py-2 rounded-full font-bold shadow-md transition transform hover:scale-105 border border-green-700">
+                        Inscription
+                    </a>
+                <?php endif; ?>
             </div>
-
-            <button class="md:hidden text-2xl focus:outline-none">
-                <i class="fa-solid fa-bars"></i>
-            </button>
         </div>
     </nav>
 
@@ -156,309 +179,91 @@ $conn = $database->getConnection();
 
     <section id="animaux" class="py-20 bg-white">
         <div class="container mx-auto px-6">
-
             <div class="text-center mb-12">
                 <span class="text-maroc-red font-bold tracking-widest uppercase text-sm">Faune Africaine</span>
                 <h2 class="font-headings text-4xl font-extrabold text-gray-900 mt-2">Nos Pensionnaires</h2>
                 <div class="w-24 h-1 bg-maroc-green mx-auto mt-4 rounded-full"></div>
             </div>
 
-            <div class="max-w-4xl mx-auto bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm mb-12">
-                <form action="" method="GET" class="flex flex-col md:flex-row gap-4 items-end">
-
-                    <div class="w-full md:w-1/3">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Filtrer par Habitat</label>
-                        <div class="relative">
-                            <select name="habitat"
-                                class="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-3 px-4 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroc-green focus:border-transparent cursor-pointer">
-                                <option value="">Tous les habitats</option>
-                                <option value="savane">Savane Africaine</option>
-                                <option value="jungle">Jungle Tropicale</option>
-                                <option value="montagne">Montagnes de l'Atlas</option>
-                                <option value="desert">Désert du Sahara</option>
-                                <option value="zone-humide">Zones Humides</option>
-                            </select>
-                            <div
-                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                <i class="fa-solid fa-chevron-down text-xs"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="w-full md:w-1/3">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Filtrer par Pays</label>
-                        <div class="relative">
-                            <select name="pays"
-                                class="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-3 px-4 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-maroc-green focus:border-transparent cursor-pointer">
-                                <option value="">Tous les pays</option>
-                                <option value="maroc">🇲🇦 Maroc</option>
-                                <option value="kenya">🇰🇪 Kenya</option>
-                                <option value="tanzanie">🇹🇿 Tanzanie</option>
-                                <option value="afrique-sud">🇿🇦 Afrique du Sud</option>
-                                <option value="congo">🇨🇩 Congo</option>
-                            </select>
-                            <div
-                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                <i class="fa-solid fa-chevron-down text-xs"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="w-full md:w-1/3">
-                        <button type="submit"
-                            class="w-full bg-maroc-green hover:bg-green-800 text-white font-bold py-3 px-4 rounded-lg transition shadow-md flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-filter"></i> Appliquer les filtres
-                        </button>
-                    </div>
-                </form>
-            </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
 
-                <div
-                    class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 border border-gray-100 flex flex-col">
-                    <div class="h-64 overflow-hidden relative">
-                        <img src="https://images.unsplash.com/photo-1547721064-da6cfb341d50?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-                            alt="Lion" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                <?php
+                // AFFICHER SEULEMENT 4 ANIMAUX (array_slice)
+                if (isset($animaux_vitrine) && !empty($animaux_vitrine)):
+                    foreach (array_slice($animaux_vitrine, 0, 4) as $a):
+                        ?>
                         <div
-                            class="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded text-gray-800 shadow-sm">
-                            <i class="fa-solid fa-location-dot text-maroc-red mr-1"></i> Maroc
-                        </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <h3 class="font-headings font-bold text-xl text-gray-800 mb-1">Lion de l'Atlas</h3>
-                        <p class="text-xs font-bold text-maroc-green uppercase tracking-wide mb-3">Montagnes</p>
-                        <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center">
-                            <span class="text-xs text-gray-500">Panthera leo leo</span>
-                            <a href="#" class="text-maroc-red hover:bg-red-50 p-2 rounded-full transition"><i
-                                    class="fa-solid fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
+                            class="group bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 h-full flex flex-col hover:shadow-2xl transition duration-300">
+                            <div class="h-64 overflow-hidden relative bg-gray-100">
+                                <?php if (!empty($a->getImage())): ?>
+                                    <img src="<?= $a->getImage() ?>" alt="<?= $a->getNom() ?>"
+                                        class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                                <?php else: ?>
+                                    <div class="flex items-center justify-center h-full text-gray-400">
+                                        <i class="fa-solid fa-paw text-4xl"></i>
+                                    </div>
+                                <?php endif; ?>
 
-                <div
-                    class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 border border-gray-100 flex flex-col">
-                    <div class="h-64 overflow-hidden relative">
-                        <img src="https://images.unsplash.com/photo-1557008075-7f2c5efa4cfd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-                            alt="Girafe"
-                            class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                        <div
-                            class="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded text-gray-800 shadow-sm">
-                            <i class="fa-solid fa-location-dot text-maroc-red mr-1"></i> Kenya
-                        </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <h3 class="font-headings font-bold text-xl text-gray-800 mb-1">Girafe Réticulée</h3>
-                        <p class="text-xs font-bold text-maroc-green uppercase tracking-wide mb-3">Savane</p>
-                        <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center">
-                            <span class="text-xs text-gray-500">Giraffa camelopardalis</span>
-                            <a href="#" class="text-maroc-red hover:bg-red-50 p-2 rounded-full transition"><i
-                                    class="fa-solid fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
+                                <div
+                                    class="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded text-gray-800 shadow-sm">
+                                    <i class="fa-solid fa-location-dot text-maroc-red mr-1"></i> <?= $a->get_pays_origine() ?>
+                                </div>
+                            </div>
 
-                <div
-                    class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 border border-gray-100 flex flex-col">
-                    <div class="h-64 overflow-hidden relative">
-                        <img src="https://images.unsplash.com/photo-1570042770669-709772a832c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-                            alt="Zèbre"
-                            class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                        <div
-                            class="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded text-gray-800 shadow-sm">
-                            <i class="fa-solid fa-location-dot text-maroc-red mr-1"></i> Tanzanie
-                        </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <h3 class="font-headings font-bold text-xl text-gray-800 mb-1">Zèbre des plaines</h3>
-                        <p class="text-xs font-bold text-maroc-green uppercase tracking-wide mb-3">Savane</p>
-                        <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center">
-                            <span class="text-xs text-gray-500">Equus quagga</span>
-                            <a href="#" class="text-maroc-red hover:bg-red-50 p-2 rounded-full transition"><i
-                                    class="fa-solid fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
+                            <div class="p-6 flex flex-col flex-grow">
+                                <h3 class="font-headings font-bold text-xl text-gray-800 mb-1"><?= $a->getNom() ?></h3>
+                                <p class="text-xs font-bold text-maroc-green uppercase tracking-wide mb-3">
+                                    <?= $a->get_nom_habitat($conn) ?>
+                                </p>
 
-                <div
-                    class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 border border-gray-100 flex flex-col">
-                    <div class="h-64 overflow-hidden relative">
-                        <img src="https://images.unsplash.com/photo-1535591273668-578e31182c4f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-                            alt="Macaque"
-                            class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                        <div
-                            class="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded text-gray-800 shadow-sm">
-                            <i class="fa-solid fa-location-dot text-maroc-red mr-1"></i> Maroc
+                                <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center">
+                                    <span class="text-xs text-gray-500 italic"><?= $a->getEspece() ?></span>
+                                    <button onclick="openModal(this)" data-nom="<?= $a->getNom() ?>"
+                                        data-desc="<?= $a->get_description_courte() ?>" data-image="<?= $a->getImage() ?>"
+                                        data-pays="<?= $a->get_pays_origine() ?>"
+                                        class="text-maroc-red hover:bg-red-50 p-2 rounded-full transition cursor-pointer">
+
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <h3 class="font-headings font-bold text-xl text-gray-800 mb-1">Macaque de Barbarie</h3>
-                        <p class="text-xs font-bold text-maroc-green uppercase tracking-wide mb-3">Forêt de Cèdres</p>
-                        <div class="mt-auto border-t border-gray-100 pt-3 flex justify-between items-center">
-                            <span class="text-xs text-gray-500">Macaca sylvanus</span>
-                            <a href="#" class="text-maroc-red hover:bg-red-50 p-2 rounded-full transition"><i
-                                    class="fa-solid fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="col-span-4 text-center text-gray-500">Aucun animal n'est visible pour le moment.</p>
+                <?php endif; ?>
+
             </div>
 
             <div class="text-center">
                 <a href="animaux.php"
                     class="inline-flex items-center justify-center gap-3 bg-white border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-bold py-4 px-10 rounded-full transition duration-300 text-lg shadow-lg group">
-                    <i class="fa-solid fa-paw group-hover:rotate-12 transition"></i>
-                    Explorer toute la collection
+                    <i class="fa-solid fa-paw group-hover:rotate-12 transition"></i> Explorer toute la collection
                 </a>
-                <p class="mt-4 text-gray-500 text-sm">Plus de 50 espèces à découvrir</p>
+                <p class="mt-4 text-gray-500 text-sm">Plus de <?= count($animaux_vitrine) ?> espèces à découvrir</p>
             </div>
-
         </div>
     </section>
 
     <section id="visites" class="py-20 bg-gray-50 relative">
         <div class="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-white to-gray-50"></div>
-
-        <div class="container mx-auto px-6 relative z-10">
-
-            <div class="text-center mb-10">
+        <div class="container mx-auto px-6 relative z-10 text-center">
+            <div class="mb-10">
                 <span class="text-maroc-red font-bold tracking-widest uppercase text-sm">Agenda CAN 2025</span>
-                <h2 class="font-headings text-4xl font-extrabold text-gray-900 mt-2">Trouvez votre parcours</h2>
+                <h2 class="font-headings text-4xl font-extrabold text-gray-900 mt-2">Réserver une visite</h2>
             </div>
 
-            <div
-                class="max-w-4xl mx-auto bg-white p-2 rounded-full shadow-xl border border-gray-200 mb-16 transform -translate-y-4">
-                <form action="" method="GET" class="flex flex-col md:flex-row items-center p-2 gap-2">
-                    <div class="flex-grow w-full md:w-auto flex items-center px-4">
-                        <i class="fa-solid fa-magnifying-glass text-gray-400 mr-3"></i>
-                        <input type="text" placeholder="Rechercher une visite (ex: Safari, Lions...)"
-                            class="w-full bg-transparent border-none focus:ring-0 text-gray-700 placeholder-gray-400"
-                            name="search">
-                    </div>
-                    <div class="h-8 w-px bg-gray-300 hidden md:block"></div>
-                    <div class="w-full md:w-auto px-4">
-                        <select name="date"
-                            class="w-full bg-transparent border-none focus:ring-0 text-gray-700 cursor-pointer">
-                            <option value="">Toutes les dates</option>
-                            <option value="today">Aujourd'hui</option>
-                            <option value="demain">Demain</option>
-                            <option value="weekend">Ce week-end</option>
-                        </select>
-                    </div>
-                    <button type="submit"
-                        class="w-full md:w-auto bg-maroc-red hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition shadow-md flex items-center justify-center gap-2">
-                        Rechercher
-                    </button>
-                </form>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-
-                <div
-                    class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden flex flex-col h-full hover:shadow-xl transition duration-300 group">
-                    <div class="relative h-48 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1596716766417-76813296c00e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                            alt="Safari"
-                            class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
-                        <div
-                            class="absolute top-4 right-4 bg-maroc-green text-white font-bold px-3 py-1 rounded-md text-sm shadow-sm">
-                            150 MAD
-                        </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-maroc-red font-bold text-xs uppercase tracking-wide">Aventure</span>
-                            <span class="text-gray-400 text-xs"><i class="fa-solid fa-calendar mr-1"></i> 15 Déc</span>
-                        </div>
-                        <h3 class="font-headings font-bold text-xl mb-2 text-gray-800">Sur les traces d'Asaad</h3>
-                        <p class="text-gray-500 text-sm mb-4 flex-grow">Un parcours immersif au cœur de la zone Atlas
-                            pour découvrir l'histoire de notre mascotte.</p>
-
-                        <div class="border-t border-gray-100 pt-4 mt-auto">
-                            <div class="flex items-center justify-between text-sm text-gray-600 mb-4">
-                                <span class="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded"><i
-                                        class="fa-regular fa-clock"></i> 1h30</span>
-                                <span class="flex items-center gap-2"><i
-                                        class="fa-solid fa-user-group text-maroc-green"></i> 5 places</span>
-                            </div>
-
-                            <a href="login.php?redirect=reservation"
-                                class="block w-full text-center bg-gray-100 text-gray-600 py-3 rounded-lg font-bold hover:bg-maroc-red hover:text-white transition shadow-sm group-hover:shadow-lg border border-gray-200">
-                                <i class="fa-solid fa-lock mr-2 text-sm"></i> Connectez-vous pour réserver
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden flex flex-col h-full hover:shadow-xl transition duration-300 group">
-                    <div class="relative h-48 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1518709414768-a88981a4515d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                            alt="Oiseaux"
-                            class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
-                        <div
-                            class="absolute top-4 right-4 bg-maroc-green text-white font-bold px-3 py-1 rounded-md text-sm shadow-sm">
-                            120 MAD
-                        </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-maroc-red font-bold text-xs uppercase tracking-wide">Découverte</span>
-                            <span class="text-gray-400 text-xs"><i class="fa-solid fa-calendar mr-1"></i> 16 Déc</span>
-                        </div>
-                        <h3 class="font-headings font-bold text-xl mb-2 text-gray-800">Les Ailes de l'Afrique</h3>
-                        <p class="text-gray-500 text-sm mb-4 flex-grow">Observation ornithologique guidée. Idéal pour
-                            les photographes amateurs.</p>
-
-                        <div class="border-t border-gray-100 pt-4 mt-auto">
-                            <div class="flex items-center justify-between text-sm text-gray-600 mb-4">
-                                <span class="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded"><i
-                                        class="fa-regular fa-clock"></i> 2h00</span>
-                                <span class="flex items-center gap-2"><i
-                                        class="fa-solid fa-user-group text-maroc-green"></i> 12 places</span>
-                            </div>
-
-                            <a href="login.php?redirect=reservation"
-                                class="block w-full text-center bg-gray-100 text-gray-600 py-3 rounded-lg font-bold hover:bg-maroc-red hover:text-white transition shadow-sm group-hover:shadow-lg border border-gray-200">
-                                <i class="fa-solid fa-lock mr-2 text-sm"></i> Connectez-vous pour réserver
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden flex flex-col h-full hover:shadow-xl transition duration-300 group">
-                    <div class="relative h-48 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                            alt="Botanique"
-                            class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
-                        <div
-                            class="absolute top-4 right-4 bg-maroc-green text-white font-bold px-3 py-1 rounded-md text-sm shadow-sm">
-                            100 MAD
-                        </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-maroc-red font-bold text-xs uppercase tracking-wide">Écologie</span>
-                            <span class="text-gray-400 text-xs"><i class="fa-solid fa-calendar mr-1"></i> Tlj</span>
-                        </div>
-                        <h3 class="font-headings font-bold text-xl mb-2 text-gray-800">Botanique & Habitats</h3>
-                        <p class="text-gray-500 text-sm mb-4 flex-grow">Comprendre l'importance de la flore pour la
-                            survie des espèces animales.</p>
-
-                        <div class="border-t border-gray-100 pt-4 mt-auto">
-                            <div class="flex items-center justify-between text-sm text-gray-600 mb-4">
-                                <span class="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded"><i
-                                        class="fa-regular fa-clock"></i> 1h00</span>
-                                <span class="flex items-center gap-2"><i
-                                        class="fa-solid fa-user-group text-maroc-green"></i> 20 places</span>
-                            </div>
-
-                            <a href="login.php?redirect=reservation"
-                                class="block w-full text-center bg-gray-100 text-gray-600 py-3 rounded-lg font-bold hover:bg-maroc-red hover:text-white transition shadow-sm group-hover:shadow-lg border border-gray-200">
-                                <i class="fa-solid fa-lock mr-2 text-sm"></i> Connectez-vous pour réserver
-                            </a>
-                        </div>
-                    </div>
+            <div class="bg-white p-10 rounded-2xl shadow-xl max-w-2xl mx-auto border-t-4 border-maroc-green">
+                <i class="fa-solid fa-ticket text-5xl text-maroc-green mb-4"></i>
+                <h3 class="text-2xl font-bold text-gray-800 mb-2">Envie de visiter le zoo ?</h3>
+                <p class="text-gray-600 mb-6">Connectez-vous à votre espace membre pour voir le planning des visites
+                    guidées, réserver vos places et accéder à votre historique.</p>
+                <div class="flex justify-center gap-4">
+                    <a href="login.php"
+                        class="bg-maroc-red text-white px-6 py-3 rounded-lg font-bold hover:bg-red-800 transition">Se
+                        connecter</a>
+                    <a href="register.php" class="text-maroc-green font-bold hover:underline px-6 py-3">Créer un
+                        compte</a>
                 </div>
             </div>
         </div>
@@ -472,9 +277,7 @@ $conn = $database->getConnection();
                         <i class="fa-solid fa-paw text-yellow-400 text-2xl"></i>
                         <span class="font-headings font-bold text-2xl">ZOO ASSAD</span>
                     </div>
-                    <p class="text-gray-400 text-sm">
-                        Le zoo officiel de la Coupe d'Afrique des Nations 2025.
-                    </p>
+                    <p class="text-gray-400 text-sm">Le zoo officiel de la Coupe d'Afrique des Nations 2025.</p>
                 </div>
                 <div>
                     <h4 class="font-bold text-lg mb-6 text-yellow-400">Liens Rapides</h4>
@@ -495,11 +298,38 @@ $conn = $database->getConnection();
             </div>
         </div>
     </footer>
-    <!-- Notifications d'erreur ou de succes -->
-    <div class="notification success hidden fixed top-6 left-1/2 transform -translate-x-1/2 z-[999] bg-green-500 text-white px-10 py-4 rounded-full shadow-2xl border-4 border-white/30 text-lg font-bold text-center min-w-[350px] shadow-green-500/50"
-        id="success_notification"></div>
-    <div class="notification error hidden fixed top-6 left-1/2 transform -translate-x-1/2 z-[999] bg-red-500 text-white px-10 py-4 rounded-full shadow-2xl border-4 border-white/30 text-lg font-bold text-center min-w-[350px] shadow-green-500/50"
-        id="error_notification"></div>
+    <!-- Popup details animal -->
+    <div id="animalModal"
+        class="fixed inset-0 z-[9999] hidden flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-300">
+
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-95"
+            id="modalContent">
+
+            <div class="relative h-48">
+                <img id="modalImage" src="" alt="Animal" class="w-full h-full object-cover">
+                <button onclick="closeModal()"
+                    class="absolute top-3 right-3 bg-white text-gray-800 hover:text-red-500 rounded-full w-8 h-8 flex items-center justify-center font-bold shadow-md transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div
+                    class="absolute bottom-3 left-3 bg-maroc-red text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                    <i class="fa-solid fa-location-dot mr-1"></i> <span id="modalPays"></span>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <h3 id="modalTitle" class="font-headings text-2xl font-bold text-gray-800 mb-2"></h3>
+                <div class="w-12 h-1 bg-maroc-green rounded-full mb-4"></div>
+                <p id="modalDesc" class="text-gray-600 text-sm leading-relaxed mb-6">
+                </p>
+
+                <button onclick="closeModal()"
+                    class="w-full bg-gray-900 text-white font-bold py-3 rounded-lg hover:bg-maroc-red transition">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

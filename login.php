@@ -62,8 +62,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
 
         <div class="p-8">
-            <?= $message ?>
-
             <form method="POST" action="">
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>

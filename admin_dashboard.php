@@ -67,11 +67,12 @@ $section = $_GET['section'] ?? 'dashboard';
 $stats_visiteurs_inscrits = User::stats_visiteurs($conn);
 $stats_animaux = Animal::stats_animaux($conn);
 $stats_habitats = Habitat::stats_habitats($conn);
+$stats_top_pays = Animal::getTopPays($conn);
 $stats = [
     'visiteurs' => $stats_visiteurs_inscrits,
     'animaux' => $stats_animaux,
-    'visites' => 12,
-    'habitats' => $stats_habitats
+    'habitats' => $stats_habitats,
+    'top_pays' => $stats_top_pays
 ];
 
 $habitats_list = Habitat::find_all_habitats($conn);
@@ -89,7 +90,7 @@ $users_list = User::find_all_users(($conn));
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="script.js" defer></script>
+    <script src="script.js?v=<?= time(); ?>" defer></script>
     <script>
         tailwind.config = {
             theme: {
@@ -210,8 +211,8 @@ $users_list = User::find_all_users(($conn));
                 <div
                     class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500 font-bold uppercase">Visites Réservées</p>
-                        <p class="text-3xl font-bold text-gray-800"><?= $stats['visites'] ?></p>
+                        <p class="text-sm text-gray-500 font-bold uppercase">Habitats</p>
+                        <p class="text-3xl font-bold text-gray-800"><?= $stats['habitats'] ?></p>
                     </div>
                     <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
                         <i class="fa-solid fa-ticket text-xl"></i>
@@ -220,7 +221,9 @@ $users_list = User::find_all_users(($conn));
                 <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-500 font-bold uppercase">Top Pays</p>
-                        <p class="text-xl font-bold text-gray-800">Maroc 🇲🇦</p>
+                        <p class="text-xl font-bold text-gray-800">
+                            <?= $stats_top_pays ?> <i class="fa-solid fa-trophy text-yellow-500 ml-2"></i>
+                        </p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                         <i class="fa-solid fa-globe text-xl"></i>
@@ -235,12 +238,12 @@ $users_list = User::find_all_users(($conn));
                     <h3 class="font-bold text-lg mb-4 text-maroc-green"><i class="fa-solid fa-plus-circle mr-2"></i>Ajouter
                         un nouvel animal</h3>
                     <form action="?section=animaux" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" name="nom" placeholder="Nom (ex: Simba)" class="border p-2 rounded w-full">
-                        <input type="text" name="espece" placeholder="Espèce (ex: Lion)" class="border p-2 rounded w-full">
+                        <input type="text" name="nom" placeholder="Nom (ex: Simba)" class="border p-2 rounded w-full" required>
+                        <input type="text" name="espece" placeholder="Espèce (ex: Lion)" class="border p-2 rounded w-full" required>
                         <input type="text" name="alimentation" placeholder="Alimentation (ex: Carnivore)"
-                            class="border p-2 rounded w-full">
-                        <input type="text" name="pays" placeholder="Pays d'origine" class="border p-2 rounded w-full">
-                        <select name="id_habitat" class="border p-2 rounded w-full">
+                            class="border p-2 rounded w-full" required>
+                        <input type="text" name="pays" placeholder="Pays d'origine" class="border p-2 rounded w-full" required>
+                        <select name="id_habitat" class="border p-2 rounded w-full" required>
                             <option value="">Choisir un habitat...</option>
                             <?php
                             if (isset($habitats_list)) {
@@ -273,7 +276,7 @@ $users_list = User::find_all_users(($conn));
                             <th class="p-4">Nom</th>
                             <th class="p-4">Espèce</th>
                             <th class="p-4">Alimentation</th>
-                            <th class="p-4">Pays</th>
+                            <th class="p-4">Pays d'Origine</th>
                             <th class="p-4">Habitat</th>
                             <th class="p-4">Description</th>
                             <th class="p-4 text-right">Actions</th>
@@ -313,7 +316,7 @@ $users_list = User::find_all_users(($conn));
 
                                     <td class="p-4">
                                         <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                            Habitat #<?= $a->get_id_habitat() ?>
+                                            <?= $a->get_nom_habitat($conn) ?>
                                         </span>
                                     </td>
 
@@ -345,13 +348,13 @@ $users_list = User::find_all_users(($conn));
                 <div class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                     <h3 class="font-bold text-lg mb-4 text-maroc-green"><i class="fa-solid fa-plus-circle mr-2"></i>Ajouter
                         un nouvel habitat</h3>
-                    <form action="?section=habitats" method="POST" enctype="multipart/form-data"
+                    <form action="?section=habitats" method="POST"
                         class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" placeholder="Nom (ex : Savane)" class="border p-2 rounded w-full" name="nom">
+                        <input type="text" placeholder="Nom (ex : Savane)" class="border p-2 rounded w-full" name="nom" required>
                         <input type="text" placeholder="Type de Climat (ex : humide)" class="border p-2 rounded w-full"
-                            name="typeclimat">
+                            name="typeclimat" required>
                         <input type="text" placeholder="Zone de l'habitat dans le zoo" class="border p-2 rounded w-full"
-                            name="zonezoo">
+                            name="zonezoo" required>
                         <div class="md:col-span-2">
                             <textarea placeholder="Description courte..." class="border p-2 rounded w-full"
                                 name="description"></textarea>
